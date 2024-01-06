@@ -10,6 +10,8 @@ if __name__ == "__main__":
     number_cores = 4
     number_tasks = 5
     scheduler = TaskScheduler(result_dict, number_cores,number_tasks)
-    result = scheduler.cooperative_algorithm()
-    plot_schedule(result)
+    # result_best = scheduler.cooperative_algorithm()
+    result_best = scheduler.best_algorithm()
+    plot_schedule_copperative(result_best.active_tasks)
+    x =1 
 
