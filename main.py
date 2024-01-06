@@ -8,7 +8,7 @@ csv_files_list = ['./csv/bfs.csv', './csv/dxtc.csv', './csv/hist.csv', './csv/hi
 if __name__ == "__main__":
     result_dict = parse_all_csv_files(csv_files_list)
     number_cores = 4
-    number_tasks = 6
+    number_tasks = 4
     scheduler = TaskScheduler(result_dict, number_cores,number_tasks)
     # result_best = scheduler.cooperative_algorithm()
     result_best = scheduler.best_algorithm()

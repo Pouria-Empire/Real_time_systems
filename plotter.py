@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from collections import defaultdict
 
 def plot_schedule_copperative(task_timings):
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(figsize=(30, 6))
 
     # Get the unique core numbers, sorted numerically
     unique_cores = sorted(set(core for _, _, core, _ in task_timings))
@@ -34,4 +34,22 @@ def plot_schedule_copperative(task_timings):
     ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
 
     # Show the Gantt chart
+    plt.show()
+
+
+def plot_energy_vs_tasks(self, max_tasks,generate_tasks,cooperative_algorithm):
+    task_range = range(10, max_tasks + 1, 15)
+    energy_values = []
+
+    for num_tasks in task_range:
+        num_tasks = num_tasks
+        tasks = generate_tasks(self.num_tasks)
+
+        cooperative_algorithm()
+        energy_values.append(self.co_operative_result.energy)
+    
+    plt.plot(task_range, energy_values, marker='o')
+    plt.xlabel('Number of Tasks')
+    plt.ylabel('Energy')
+    plt.title('Energy vs Number of Tasks')
     plt.show()
