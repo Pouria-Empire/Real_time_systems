@@ -34,7 +34,7 @@ class TaskScheduler:
             end_time = start_time + self.result_dict[task][self.num_cores - 1][3]
 
             for core in range(1, self.num_cores + 1):
-                self.co_operative_result.active_tasks.append((start_time, end_time, core))
+                self.co_operative_result.active_tasks.append((start_time, end_time, core,task))
 
             start_time = end_time
 
