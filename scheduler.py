@@ -43,26 +43,31 @@ class TaskScheduler:
 
     
     def best_algorithm(self):
-            # Initialize the best result with a large value
+        # Initialize the best result with a large value
         best_makespan = float('inf')
 
-        # for task in self.tasks:.
         for cores_combination in itertools.combinations_with_replacement(range(1, self.num_cores + 1), self.num_tasks):
             temp_schedule = [[] for _ in range(self.num_cores)]
             temp_result = Result()
 
             for core, task in zip(cores_combination, self.result_dict):
+                if core == 4:
+                    kir = 1
                 earliest_core = min(range(core), key=lambda c: sum(map(lambda t: t[3], temp_schedule[c])))
 
                 start_time = sum(map(lambda t: t[1], temp_schedule[earliest_core]))
                 end_time = start_time + self.result_dict[task][core][3]
+
+                # Ensure that tasks are scheduled on idle cores
+                if start_time == 0 and len(temp_schedule[earliest_core])>0:
+                    start_time = max(end_time for (_, end_time, _, _) in temp_schedule[earliest_core])
 
                 temp_schedule[earliest_core].append((start_time, end_time, self.result_dict[task][core][3], core))
                 temp_result.avg_time += self.result_dict[task][core][1]
                 temp_result.min_time += self.result_dict[task][core][2]
                 temp_result.max_time += self.result_dict[task][core][3]
                 temp_result.energy += self.result_dict[task][core][5]
-                temp_result.active_tasks.append((start_time, end_time, core, task))
+                temp_result.active_tasks.append((start_time, end_time, earliest_core, task))
 
             # Calculate makespan for the current configuration
             current_makespan = max(end_time for core_schedule in temp_schedule for (_, end_time, _, _) in core_schedule)
