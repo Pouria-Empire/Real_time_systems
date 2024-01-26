@@ -53,3 +53,41 @@ def plot_energy_vs_tasks(self, max_tasks,generate_tasks,cooperative_algorithm):
     plt.ylabel('Energy')
     plt.title('Energy vs Number of Tasks')
     plt.show()
+
+
+
+
+def plot_cores(cores):
+    # Create a figure and axis
+    fig, ax = plt.subplots()
+
+    # Extract unique core labels
+    core_labels = set(("Core " + str(core.id)) for core in cores)
+
+    # Set ticks on the Y-axis and label them with unique core labels
+    ax.set_yticks(range(len(core_labels)))
+    ax.set_yticklabels(core_labels)
+
+    for core in cores:
+        # Plot the time segments for each entry
+        for entry in core.tasks:
+            start_point = entry[0]
+            end_point = entry[1]
+            entry_name = entry[2]
+            core_label = "Core " + str(core.id)
+
+            # Find the index of the core label for positioning on the Y-axis
+            core_index = list(core_labels).index(core_label)
+
+            # Draw a horizontal bar for each time segment
+            ax.barh(y=core_index, width=end_point - start_point, left=start_point, label=entry_name)
+            segment_center = start_point + (end_point - start_point) / 2
+            ax.text(segment_center, core_index, entry_name, ha="center", va="center", color="white")
+
+    # Set labels and legend
+    ax.set_xlabel("Time")
+    ax.set_title("Time Segments Labeled as 'CORE' on Y-axis")
+    ax.legend()
+
+    # Show the plot
+    plt.show()

@@ -1,6 +1,8 @@
 import time
 import random 
 import itertools
+import matplotlib.pyplot as plt
+from helper import *
 
 class TaskScheduler:
     def __init__(self, result_dict, num_cores, num_tasks):
@@ -10,17 +12,16 @@ class TaskScheduler:
         self.tasks = self.generate_tasks(self.num_tasks)
         self.co_operative_result = Result()
         self.best_result = Result()
+        self.profile_algorithm_result = Result()
 
     def generate_tasks(self,num:int):
         space = ['bfs','dxtc','hist','hist2','hotspot','mmul','mmul2','stereodisparity']
         tasks = random.sample(space * (num // len(space) + 1), num)
         return tasks
 
-    def process_task(self, task):
-        return "khar"
-
     def cooperative_algorithm(self):
         start_time = 0
+        max_end_time = 0  # Initialize max_end_time
         for task in self.tasks:
             # Find avg time
             self.co_operative_result.avg_time += self.result_dict[task][self.num_cores - 1][1]
@@ -32,13 +33,16 @@ class TaskScheduler:
             self.co_operative_result.energy += self.result_dict[task][self.num_cores - 1][5]
             # Find order of tasks
             end_time = start_time + self.result_dict[task][self.num_cores - 1][3]
+            # Update max_end_time if the current task's end_time is greater
+            if end_time > max_end_time:
+                max_end_time = end_time
 
             for core in range(1, self.num_cores + 1):
                 self.co_operative_result.active_tasks.append((start_time, end_time, core,task))
 
             start_time = end_time
 
-        return self.co_operative_result
+        return self.co_operative_result,max_end_time
 
 
     
@@ -58,11 +62,9 @@ class TaskScheduler:
                     end_time = start_time + self.result_dict[task][core-1][3]
 
                     temp_schedule[earliest_core].append((start_time, end_time, self.result_dict[task][core-1][3], core))
-                    temp_result.avg_time += self.result_dict[task][core-1][1]
-                    temp_result.min_time += self.result_dict[task][core-1][2]
-                    temp_result.max_time += self.result_dict[task][core-1][3]
-                    temp_result.energy += self.result_dict[task][core-1][5]
-                    temp_result.active_tasks.append((start_time, end_time, earliest_core, task))
+                    if core == 7:
+                        x = 1
+                    self.save_result(temp_result, core, task, earliest_core, start_time, end_time)
 
             # Calculate makespan for the current configuration
             current_makespan = max(end_time for core_schedule in temp_schedule for (_, end_time, _, _) in core_schedule)
@@ -75,26 +77,117 @@ class TaskScheduler:
         print(f"\nBest Algorithm Result - Makespan: {best_makespan:.2f}s")
         print(f"Avg Time: {self.best_result.avg_time:.2f}s, Min Time: {self.best_result.min_time:.2f}s, Max Time: {self.best_result.max_time:.2f}s")
         print(f"Total Energy: {self.best_result.energy:.2f}, Active Tasks Order: {self.best_result.active_tasks}")
-        return self.best_result
+        return self.best_result,best_makespan
+
+    def save_result(self, temp_result, core, task, earliest_core, start_time, end_time):
+        temp_result.avg_time += self.result_dict[task][core-1][1]
+        temp_result.min_time += self.result_dict[task][core-1][2]
+        temp_result.max_time += self.result_dict[task][core-1][3]
+        temp_result.energy += self.result_dict[task][core-1][5]
+        temp_result.active_tasks.append((start_time, end_time, earliest_core, task))
 
 
 
+    def profile_algorithm(self):
+        # for i in self.result_dict:
+        #     print(self.result_dict[i])
+            
+        #TODO we must update profiles acoording to remaining tasks
+        #TODO there is a bug, this code must calculate Num tasks not cores
+        temp_result = Result()
+        profiles = self.calculate_profile(self.num_cores)
+        
+        cores = [Core() for _ in range(self.num_cores)]
+
+        time = 0
+        
+        while(profiles):
+            
+            for core in cores:
+                if core.next_idle_time <= time:
+                    if core.id == 7:
+                        x = 1
+                    core.is_active = False
+                    print(f'core with id {core.id} was released at {time}')
+                    
+            idle_cores = [core for core in cores if core.is_active == False]
+            
+
+            #must have task name and core count and min_time
+            current_tasks = self.find_tasks(len(idle_cores), profiles)
+            
+            
+            while(len(idle_cores) > 0 and current_tasks):
+                for i in current_tasks:
+                    self.profile_algorithm_result.energy += self.result_dict[i[1]][i[0] - 1][5]
+                    for j in range(i[0]):
+                        idle_cores[0].is_active = True
+                        idle_cores[0].next_idle_time = time + self.result_dict[i[1]][i[0] - 1][1]
+                        idle_cores[0].tasks.append((time, idle_cores[0].next_idle_time, i[1]))
+                        self.save_result(temp_result,idle_cores[0].id,i[1],idle_cores[0].id,time,idle_cores[0].next_idle_time)
+                        print(f'core with id {idle_cores[0].id} is running task {i[1]}, starting time {time}')
+                        
+                        idle_cores.pop(0)
+                    
+                    current_tasks.remove(i)
+            
+            true_objects = [core for core in cores if core.is_active]
+
+            # Find the object with the minimum value among the True objects
+            min_value_object = min(true_objects, key=lambda obj: obj.next_idle_time)
+                    
+                        
+            time = min_value_object.next_idle_time
+            # profiles = self.calculate_profile()
 
 
-def profile_algorithm(self):
-    profiles = self.calculate_profile()
-    x = 1
+        
+        makespan = 0
+        
+        for core in cores:
+            makespan = max(core.tasks[-1][1], makespan)
+            
+        self.profile_algorithm_result.avg_time = makespan  
+        
+        return cores,temp_result,makespan
+        
+        
+    def find_tasks(self, core_count, profiles):
+        result = []
+        time_forward = float('inf')
+        if(core_count <= len(profiles)):
+            while(core_count > 0 and profiles):
+                i , j = find_max_index_2d([row[1:core_count + 1] for row in profiles])
+                time_forward = min(time_forward, self.result_dict[profiles[i][0]][j][1])
+                core_count -= (j + 1)
+                result.append((j+1, profiles[i][0]))
+                profiles.pop(i)
+        else:
+            max_core = core_count - len(profiles) + 1
+            i , j = find_max_index_2d([row[max_core:max_core + 1] for row in profiles])
+            core_count -= (max_core)
+            result.append((max_core, profiles[i][0]))
+            profiles.pop(i)
+            while(core_count > 0 and profiles):
+                i , j = find_max_index_2d([row[1:core_count + 1] for row in profiles])
+                time_forward = min(time_forward, self.result_dict[profiles[i][0]][j][1])
+                core_count -= (j + 1)
+                result.append((j+1, profiles[i][0]))
+                profiles.pop(i)
+        return result
+        
     
     
-    
 
-def calculate_profile(self):
-    result = [[0 for _ in range(6)] for _ in range(self.num_tasks)]
-    for i in range(self.num_tasks):
-        for j in range(6):
-            result[i][j] = self.result_dict[self.tasks[i]][0][1] / self.result_dict[self.tasks[i]][j][1]
-    
-    return result
+    def calculate_profile(self, N):
+        result = [[0 for _ in range(7)] for _ in range(self.num_tasks)]
+        for i in range(self.num_tasks):
+            result[i][0] = self.tasks[i]
+            result[i][1] = 1.0
+            for j in range(2,7):
+                result[i][j] = ((self.result_dict[self.tasks[i]][0][1] / self.result_dict[self.tasks[i]][j - 1][1]) ** (1/N)) / j
+        
+        return result
 
                 
                 
@@ -110,3 +203,19 @@ class Result:
         self.max_time = 0
         self.energy = 0
         self.active_tasks = []
+
+
+class Core:
+    
+    id = 1
+    
+    def __init__(self):
+        self.next_idle_time = 0
+        self.is_active = False
+        self.tasks = []
+        self.id = Core.id
+        Core.id += 1
+        
+        
+
+        
