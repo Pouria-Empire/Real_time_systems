@@ -21,7 +21,7 @@ class TaskScheduler:
 
     def cooperative_algorithm(self):
         start_time = 0
-        max_end_time = 0  # Initialize max_end_time
+        # cores = [Core() for _ in range(self.num_cores)]
         for task in self.tasks:
             # Find avg time
             self.co_operative_result.avg_time += self.result_dict[task][self.num_cores - 1][1]
@@ -32,17 +32,20 @@ class TaskScheduler:
             # Find total energy
             self.co_operative_result.energy += self.result_dict[task][self.num_cores - 1][5]
             # Find order of tasks
-            end_time = start_time + self.result_dict[task][self.num_cores - 1][3]
-            # Update max_end_time if the current task's end_time is greater
-            if end_time > max_end_time:
-                max_end_time = end_time
+            end_time = start_time + self.result_dict[task][self.num_cores - 1][1]
 
-            for core in range(1, self.num_cores + 1):
-                self.co_operative_result.active_tasks.append((start_time, end_time, core,task))
+            # for core in range(1, self.num_cores + 1):
+            #     self.co_operative_result.active_tasks.append((start_time, end_time, core,task))
 
+            # for core in cores:
+            #     core.tasks.append((start_time, end_time, task))
+            
             start_time = end_time
 
-        return self.co_operative_result,max_end_time
+        # plot(cores)
+
+
+        return self.co_operative_result,end_time
 
 
     
@@ -219,3 +222,40 @@ class Core:
         
 
         
+
+
+
+def plot(cores):
+    # Create a figure and axis
+    fig, ax = plt.subplots()
+
+    # Extract unique core labels
+    core_labels = set(("Core " + str(core.id)) for core in cores)
+
+    # Set ticks on the Y-axis and label them with unique core labels
+    ax.set_yticks(range(len(core_labels)))
+    ax.set_yticklabels(core_labels)
+
+    for core in cores:
+        # Plot the time segments for each entry
+        for entry in core.tasks:
+            start_point = entry[0]
+            end_point = entry[1]
+            entry_name = entry[2]
+            core_label = "Core " + str(core.id)
+
+            # Find the index of the core label for positioning on the Y-axis
+            core_index = list(core_labels).index(core_label)
+
+            # Draw a horizontal bar for each time segment
+            ax.barh(y=core_index, width=end_point - start_point, left=start_point, label=entry_name)
+            segment_center = start_point + (end_point - start_point) / 2
+            ax.text(segment_center, core_index, entry_name, ha="center", va="center", color="white")
+
+    # Set labels and legend
+    ax.set_xlabel("Time")
+    ax.set_title("Time Segments Labeled as 'CORE' on Y-axis")
+    ax.legend()
+
+    # Show the plot
+    plt.show()

@@ -9,6 +9,7 @@ import time
 csv_files_list = ['./csv/bfs.csv', './csv/dxtc.csv', './csv/hist.csv', './csv/hist2.csv', './csv/hotspot.csv', './csv/mmul.csv', './csv/mmul2.csv', './csv/stereodisparity.csv']
 
 def draw_plots(result_dict):
+    
     number_cores = 4
     tasks_list = [2, 4, 6, 8, 10, 12]
 
@@ -19,6 +20,7 @@ def draw_plots(result_dict):
     execution_times_cooperative_list = []
     execution_times_best_list = []
     execution_times_profile_list = []
+    
     for number_tasks in tasks_list:
         Core.id = 1
         scheduler = TaskScheduler(result_dict, number_cores, number_tasks)
@@ -107,17 +109,25 @@ def draw_energy(tasks_list, energy_list):
     plt.show()
 
 def draw_makespan(tasks_list, normalized_makespan_cooperative_list, normalized_makespan_best_list, normalized_makespan_profile_list):
-    for i, tasks in enumerate(tasks_list):
-        plt.plot([tasks], [normalized_makespan_cooperative_list[i]], 'o-', color='blue', label=f'Cooperative' if i == 0 else "")
-        plt.plot([tasks], [normalized_makespan_best_list[i]], 'o-', color='orange', label=f'Best' if i == 0 else "")
-        plt.plot([tasks], [normalized_makespan_profile_list[i]], 'o-', color='green', label=f'Profile' if i == 0 else "")
+    # for i, tasks in enumerate(tasks_list):
+    #     plt.plot([tasks], [normalized_makespan_cooperative_list[i]], 'o-', color='blue', label=f'Cooperative' if i == 0 else "")
+    #     plt.plot([tasks], [normalized_makespan_best_list[i]], 'o-', color='orange', label=f'Best' if i == 0 else "")
+    #     plt.plot([tasks], [normalized_makespan_profile_list[i]], 'o-', color='green', label=f'Profile' if i == 0 else "")
 
+
+    plt.plot(tasks_list, normalized_makespan_cooperative_list, label='Co-operative', marker='o')
+    plt.plot(tasks_list, normalized_makespan_best_list, label='Best', marker='o')
+    plt.plot(tasks_list, normalized_makespan_profile_list, label='Profile', marker='o')
+    
     plt.title('Normalized Makespans per Task')
     plt.xlabel('Number of Tasks')
     plt.ylabel('Normalized Makespan')
     plt.legend()
     plt.grid(True)
     plt.show()
+
+
+
 
 if __name__ == "__main__":
     result_dict = parse_all_csv_files(csv_files_list)
