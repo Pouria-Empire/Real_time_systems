@@ -78,9 +78,9 @@ class TaskScheduler:
                 best_makespan = current_makespan
                 self.best_result = temp_result
 
-        print(f"\nBest Algorithm Result - Makespan: {best_makespan:.2f}s")
-        print(f"Avg Time: {self.best_result.avg_time:.2f}s, Min Time: {self.best_result.min_time:.2f}s, Max Time: {self.best_result.max_time:.2f}s")
-        print(f"Total Energy: {self.best_result.energy:.2f}, Active Tasks Order: {self.best_result.active_tasks}")
+        # print(f"\nBest Algorithm Result - Makespan: {best_makespan:.2f}s")
+        # print(f"Avg Time: {self.best_result.avg_time:.2f}s, Min Time: {self.best_result.min_time:.2f}s, Max Time: {self.best_result.max_time:.2f}s")
+        # print(f"Total Energy: {self.best_result.energy:.2f}, Active Tasks Order: {self.best_result.active_tasks}")
         return self.best_result,best_makespan
 
     def save_result(self, temp_result, core, task, earliest_core, start_time, end_time):
@@ -114,7 +114,7 @@ class TaskScheduler:
             for core in cores:
                 if core.next_idle_time <= time:
                     core.is_active = False
-                    print(f'core with id {core.id} was released at {time}')
+                    # print(f'core with id {core.id} was released at {time}')
                     
             idle_cores = [core for core in cores if core.is_active == False]
             
@@ -130,7 +130,7 @@ class TaskScheduler:
                         idle_cores[0].is_active = True
                         idle_cores[0].next_idle_time = time + self.result_dict[i[1]][i[0] - 1][1]
                         idle_cores[0].tasks.append((time, idle_cores[0].next_idle_time, i[1]))
-                        print(f'core with id {idle_cores[0].id} is running task {i[1]}, starting time {time}')
+                        # print(f'core with id {idle_cores[0].id} is running task {i[1]}, starting time {time}')
                         
                         idle_cores.pop(0)
                     
@@ -158,7 +158,7 @@ class TaskScheduler:
         makespan = time
         self.profile_algorithm_result.avg_time = makespan
         
-        plot(cores)
+        # plot(cores)
         
         return cores,makespan
         
@@ -182,8 +182,8 @@ class TaskScheduler:
                     
                     num_cores += int(i / (7 ** j)) % 7
                     current_core = int(i / (7 ** j)) % 7
-                    print(i)
-                    print(num_cores)
+                    # print(i)
+                    # print(num_cores)
                     if current_core > 0:
                         gain += profiles[j][current_core]
                     
