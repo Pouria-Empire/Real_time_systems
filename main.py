@@ -10,7 +10,7 @@ csv_files_list = ['./csv/bfs.csv', './csv/dxtc.csv', './csv/hist.csv', './csv/hi
 
 def draw_plots(result_dict):
     
-    number_cores = 4
+    number_cores = 6
     tasks_list = [2, 4, 6, 8, 10, 12]
 
     normalized_makespan_cooperative_list = []
@@ -27,7 +27,7 @@ def draw_plots(result_dict):
 
         result_cooperative, makespan_cooperative = scheduler.cooperative_algorithm()
         result_best, makespan_best = scheduler.best_algorithm()
-        _, result_cores, makespan_profile = scheduler.profile_algorithm()
+        result_cores, makespan_profile = scheduler.profile_algorithm()
 
         # Divide makespans by makespan_cooperative
         normalized_makespan_cooperative = makespan_cooperative / makespan_cooperative
@@ -39,7 +39,7 @@ def draw_plots(result_dict):
         normalized_makespan_profile_list.append(normalized_makespan_profile)
 
         # Energy consumption
-        energy_list.append([result_cooperative.energy, result_best.energy, result_cores.energy])
+        energy_list.append([result_cooperative.energy, result_best.energy, scheduler.profile_algorithm_result.energy])
 
     # Measure execution time for each algorithm
     execution_times_cooperative = []
@@ -109,12 +109,6 @@ def draw_energy(tasks_list, energy_list):
     plt.show()
 
 def draw_makespan(tasks_list, normalized_makespan_cooperative_list, normalized_makespan_best_list, normalized_makespan_profile_list):
-    # for i, tasks in enumerate(tasks_list):
-    #     plt.plot([tasks], [normalized_makespan_cooperative_list[i]], 'o-', color='blue', label=f'Cooperative' if i == 0 else "")
-    #     plt.plot([tasks], [normalized_makespan_best_list[i]], 'o-', color='orange', label=f'Best' if i == 0 else "")
-    #     plt.plot([tasks], [normalized_makespan_profile_list[i]], 'o-', color='green', label=f'Profile' if i == 0 else "")
-
-
     plt.plot(tasks_list, normalized_makespan_cooperative_list, label='Co-operative', marker='o')
     plt.plot(tasks_list, normalized_makespan_best_list, label='Best', marker='o')
     plt.plot(tasks_list, normalized_makespan_profile_list, label='Profile', marker='o')

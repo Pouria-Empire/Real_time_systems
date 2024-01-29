@@ -2,6 +2,7 @@ import time
 import random 
 import itertools
 import matplotlib.pyplot as plt
+import math
 from helper import *
 
 class TaskScheduler:
@@ -91,12 +92,16 @@ class TaskScheduler:
 
 
 
+
+
+
     def profile_algorithm(self):
         # for i in self.result_dict:
         #     print(self.result_dict[i])
             
         #TODO we must update profiles acoording to remaining tasks
         #TODO there is a bug, this code must calculate Num tasks not cores
+        
         temp_result = Result()
         profiles = self.calculate_profile(self.num_cores)
         
@@ -108,8 +113,6 @@ class TaskScheduler:
             
             for core in cores:
                 if core.next_idle_time <= time:
-                    if core.id == 7:
-                        x = 1
                     core.is_active = False
                     print(f'core with id {core.id} was released at {time}')
                     
@@ -127,7 +130,6 @@ class TaskScheduler:
                         idle_cores[0].is_active = True
                         idle_cores[0].next_idle_time = time + self.result_dict[i[1]][i[0] - 1][1]
                         idle_cores[0].tasks.append((time, idle_cores[0].next_idle_time, i[1]))
-                        self.save_result(temp_result,idle_cores[0].id,i[1],idle_cores[0].id,time,idle_cores[0].next_idle_time)
                         print(f'core with id {idle_cores[0].id} is running task {i[1]}, starting time {time}')
                         
                         idle_cores.pop(0)
@@ -144,39 +146,65 @@ class TaskScheduler:
             # profiles = self.calculate_profile()
 
 
+        #update time one final time
+        true_objects = [core for core in cores if core.is_active]
+
+        # Find the object with the minimum value among the True objects
+        max_value_object = max(true_objects, key=lambda obj: obj.next_idle_time)
+                    
+                        
+        time = max_value_object.next_idle_time
+
+        makespan = time
+        self.profile_algorithm_result.avg_time = makespan
         
-        makespan = 0
+        plot(cores)
         
-        for core in cores:
-            makespan = max(core.tasks[-1][1], makespan)
-            
-        self.profile_algorithm_result.avg_time = makespan  
-        
-        return cores,temp_result,makespan
+        return cores,makespan
         
         
     def find_tasks(self, core_count, profiles):
         result = []
-        time_forward = float('inf')
         if(core_count <= len(profiles)):
             while(core_count > 0 and profiles):
-                i , j = find_max_index_2d([row[1:core_count + 1] for row in profiles])
-                time_forward = min(time_forward, self.result_dict[profiles[i][0]][j][1])
-                core_count -= (j + 1)
-                result.append((j+1, profiles[i][0]))
-                profiles.pop(i)
+
+                core_count -= 1
+                result.append((1, profiles[0][0]))
+                profiles.pop(0)
         else:
-            max_core = core_count - len(profiles) + 1
-            i , j = find_max_index_2d([row[max_core:max_core + 1] for row in profiles])
-            core_count -= (max_core)
-            result.append((max_core, profiles[i][0]))
-            profiles.pop(i)
-            while(core_count > 0 and profiles):
-                i , j = find_max_index_2d([row[1:core_count + 1] for row in profiles])
-                time_forward = min(time_forward, self.result_dict[profiles[i][0]][j][1])
-                core_count -= (j + 1)
-                result.append((j+1, profiles[i][0]))
-                profiles.pop(i)
+
+            max_gain = 0
+            
+            for i in range(7 ** len(profiles)):
+                num_cores = 0
+                gain = 0
+                for j in range(len(profiles)):
+                    
+                    num_cores += int(i / (7 ** j)) % 7
+                    current_core = int(i / (7 ** j)) % 7
+                    print(i)
+                    print(num_cores)
+                    if current_core > 0:
+                        gain += profiles[j][current_core]
+                    
+                if(num_cores <= core_count and gain > max_gain):
+                    result = []
+                    max_gain = gain
+                    for j in range(len(profiles)):
+                    
+                        cores = int(i / (7 ** j)) % 7
+                    
+                        if cores > 0:
+                            result.append((cores, profiles[j][0]))
+                
+            
+            for i in result:
+                for j in range(len(profiles)):
+                    profiles[j][0] == i[1]
+                    profiles.pop(j)
+                    break    
+                
+            
         return result
         
     
@@ -188,13 +216,15 @@ class TaskScheduler:
             result[i][0] = self.tasks[i]
             result[i][1] = 1.0
             for j in range(2,7):
-                result[i][j] = ((self.result_dict[self.tasks[i]][0][1] / self.result_dict[self.tasks[i]][j - 1][1]) ** (1/N)) / j
+                result[i][j] = ((self.result_dict[self.tasks[i]][0][1] / self.result_dict[self.tasks[i]][j - 1][1]) ** (1/N))
+        
+        
         
         return result
 
                 
                 
-
+    
 
 
 
@@ -259,3 +289,33 @@ def plot(cores):
 
     # Show the plot
     plt.show()
+    
+    
+    
+def knapsack(W, V, capacity):
+    n = len(W)
+    
+    # Initialize a 2D list to store the maximum values for each subproblem
+    dp = [[0] * (capacity + 1) for _ in range(n + 1)]
+
+    # Build the DP table
+    for i in range(1, n + 1):
+        for w in range(capacity + 1):
+            if W[i - 1] <= w:
+                dp[i][w] = max(dp[i - 1][w], V[i - 1] + dp[i - 1][w - W[i - 1]])
+            else:
+                dp[i][w] = dp[i - 1][w]
+
+    # Backtrack to find the selected items
+    selected_items = []
+    i, w = n, capacity
+    while i > 0 and w > 0:
+        if dp[i][w] != dp[i - 1][w]:
+            selected_items.append(i - 1)
+            w -= W[i - 1]
+        i -= 1
+
+    selected_items.reverse()
+    
+    # Return the maximum value and the selected items
+    return dp[n][capacity], selected_items
