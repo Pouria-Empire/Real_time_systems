@@ -4,6 +4,8 @@ import itertools
 import matplotlib.pyplot as plt
 import math
 from helper import *
+from itertools import permutations
+
 
 class TaskScheduler:
     def __init__(self, result_dict, num_cores, num_tasks):
@@ -22,7 +24,7 @@ class TaskScheduler:
 
     def cooperative_algorithm(self):
         start_time = 0
-        # cores = [Core() for _ in range(self.num_cores)]
+        cores = [Core() for _ in range(self.num_cores)]
         for task in self.tasks:
             # Find avg time
             self.co_operative_result.avg_time += self.result_dict[task][self.num_cores - 1][1]
@@ -38,8 +40,8 @@ class TaskScheduler:
             # for core in range(1, self.num_cores + 1):
             #     self.co_operative_result.active_tasks.append((start_time, end_time, core,task))
 
-            # for core in cores:
-            #     core.tasks.append((start_time, end_time, task))
+            for core in cores:
+                core.tasks.append((start_time, end_time, task))
             
             start_time = end_time
 
@@ -53,42 +55,83 @@ class TaskScheduler:
     def best_algorithm(self):
         # Initialize the best result with a large value
         best_makespan = float('inf')
+        best_energy = float('inf')
+        final_cores = []
+        for i in range(6 ** len(self.tasks)):
+            
+            task_and_cores = []
 
-        for cores_combination in itertools.combinations_with_replacement(range(1, self.num_cores + 1), self.num_tasks):
-            temp_schedule = [[] for _ in range(self.num_cores)]
-            temp_result = Result()
+            for j in range(len(self.tasks)):
+                task = self.tasks[j]
+                num_cores = (int(i / (6 ** j)) % 6) + 1
+                running_time = self.result_dict[task][num_cores - 1][1]
+                task_and_cores.append((task, num_cores, running_time))
+            
+            all_permutations = permutations(task_and_cores)
+            all_permutations = [list(t) for t in all_permutations]
+            # Iterate over each permutation
+            for perm in all_permutations:
+                cores = [Core() for _ in range(self.num_cores)]
+                makespan = 0
+                time = 0
+                energy = 0
+                while(perm):
+                    for core in cores:
+                        if core.next_idle_time <= time:
+                            core.is_active = False
+                    # print(f'core with id {core.id} was released at {time}')
+                    
+                    idle_cores = [core for core in cores if core.is_active == False]
 
-            for core, task in zip(cores_combination, self.result_dict):
-                for index in range(core):
-                    earliest_core = min(range(self.num_cores), key=lambda c: sum(map(lambda t: t[2], temp_schedule[c])))
+                    while(perm and perm[0][1] <= len(idle_cores)):
+                        if len(idle_cores) >= perm[0][1]:
+                            energy += self.result_dict[perm[0][0]][perm[0][1] - 1][5]
+                            for j in range(perm[0][1]):
+                                idle_cores[0].is_active = True
+                                idle_cores[0].next_idle_time = time + self.result_dict[perm[0][0]][perm[0][1] - 1][1]
+                                idle_cores[0].tasks.append((time, idle_cores[0].next_idle_time, perm[0][0]))
+                                # print(f'core with id {idle_cores[0].id} is running task {i[1]}, starting time {time}')
+                                
+                                idle_cores.pop(0)
+                            
+                            perm.pop(0)
+                        
+                        else:
+                            break   
+                
+                    true_objects = [core for core in cores if core.is_active]
 
-                    start_time = sum(map(lambda t: t[1], temp_schedule[earliest_core]))
-                    end_time = start_time + self.result_dict[task][core-1][3]
+                    # Find the object with the minimum value among the True objects
+                    min_value_object = min(true_objects, key=lambda obj: obj.next_idle_time)
+                    
+                        
+                    time = min_value_object.next_idle_time
+                    
+                
+                true_objects = [core for core in cores if core.is_active]
 
-                    temp_schedule[earliest_core].append((start_time, end_time, self.result_dict[task][core-1][3], core))
-                    if core == 7:
-                        x = 1
-                    self.save_result(temp_result, core, task, earliest_core, start_time, end_time)
+                # Find the object with the minimum value among the True objects
+                max_value_object = max(true_objects, key=lambda obj: obj.next_idle_time)
+                            
+                                
+                time = max_value_object.next_idle_time
 
-            # Calculate makespan for the current configuration
-            current_makespan = max(end_time for core_schedule in temp_schedule for (_, end_time, _, _) in core_schedule)
+                makespan = time
+                self.profile_algorithm_result.avg_time = makespan
+                
+                if makespan < best_makespan:
+                    best_makespan = min(best_makespan, makespan)
+                    best_energy = min(best_energy, energy)
+                    final_cores = cores
+                
+         
+        # plot(cores)       
+        return best_energy, best_makespan
+                    
+            
+            
+            
 
-            # Update the best result if the current configuration has a smaller makespan
-            if current_makespan < best_makespan:
-                best_makespan = current_makespan
-                self.best_result = temp_result
-
-        # print(f"\nBest Algorithm Result - Makespan: {best_makespan:.2f}s")
-        # print(f"Avg Time: {self.best_result.avg_time:.2f}s, Min Time: {self.best_result.min_time:.2f}s, Max Time: {self.best_result.max_time:.2f}s")
-        # print(f"Total Energy: {self.best_result.energy:.2f}, Active Tasks Order: {self.best_result.active_tasks}")
-        return self.best_result,best_makespan
-
-    def save_result(self, temp_result, core, task, earliest_core, start_time, end_time):
-        temp_result.avg_time += self.result_dict[task][core-1][1]
-        temp_result.min_time += self.result_dict[task][core-1][2]
-        temp_result.max_time += self.result_dict[task][core-1][3]
-        temp_result.energy += self.result_dict[task][core-1][5]
-        temp_result.active_tasks.append((start_time, end_time, earliest_core, task))
 
 
 

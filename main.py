@@ -11,7 +11,7 @@ csv_files_list = ['./csv/bfs.csv', './csv/dxtc.csv', './csv/hist.csv', './csv/hi
 def draw_plots(result_dict):
     
     number_cores = 6
-    tasks_list = [2, 4, 6, 8, 10, 12]
+    tasks_list = [4]
 
     normalized_makespan_cooperative_list = []
     normalized_makespan_best_list = []
@@ -52,7 +52,7 @@ def draw_plots(result_dict):
         normalized_makespan_profile_list.append(normalized_makespan_profile)
 
         # Energy consumption
-        energy_list.append([result_cooperative.energy, result_best.energy, scheduler.profile_algorithm_result.energy])
+        energy_list.append([result_cooperative.energy, result_best, scheduler.profile_algorithm_result.energy])
 
     # Measure execution time for each algorithm
 
