@@ -11,7 +11,7 @@ csv_files_list = ['./csv/bfs.csv', './csv/dxtc.csv', './csv/hist.csv', './csv/hi
 def draw_plots(result_dict):
     
     number_cores = 6
-    tasks_list = [4]
+    tasks_list = [1, 2, 3, 4]
 
     normalized_makespan_cooperative_list = []
     normalized_makespan_best_list = []
